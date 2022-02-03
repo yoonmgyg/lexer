@@ -20,7 +20,10 @@ public class Token implements IToken {
       }
     @Override  
     public int getIntValue(){
-    	return 0;
+		if (kind == Kind.INT_LIT) {
+			return Integer.parseInt(input);
+		}
+		return 0;
     }
 	@Override
 	public SourceLocation getSourceLocation() {
@@ -28,14 +31,23 @@ public class Token implements IToken {
 	}
 	@Override
 	public float getFloatValue() {
+		if (kind == Kind.FLOAT_LIT) {
+			return Float.parseFloat(input);
+		}
 		return 0;
 	}
 	@Override
 	public boolean getBooleanValue() {
+		if (kind == Kind.BOOLEAN_LIT) {
+			return Boolean.parseBoolean(input);
+		}
 		return false;
 	}
 	@Override
 	public String getStringValue() {
-		return input;
+		if (kind == Kind.STRING_LIT) {
+			return input;
+		}
+		return "";
 	}
 }

@@ -12,12 +12,58 @@ class Lexer implements ILexer {
   private final List<Token> tokens = new ArrayList<>();
   private int start = 0;
   private int pos = 0;
-  private int lines = 0;
+  private int lines = 1;
+  
+  private static final Map<String, Kind> keywords;
+  static {
+	    keywords = new HashMap<>();
+	    keywords.put("string", Kind.TYPE);
+	    keywords.put("int", Kind.TYPE);
+	    keywords.put("float", Kind.TYPE);
+	    keywords.put("boolean", Kind.TYPE);
+	    keywords.put("color", Kind.TYPE);
+	    keywords.put("image", Kind.TYPE);
+	    keywords.put("void", Kind.TYPE);
+	    
+	    keywords.put("getWidth", Kind.IMAGE_OP);
+	    keywords.put("getHeight", Kind.IMAGE_OP);
+	    
+	    keywords.put("getRed", Kind.COLOR_OP);
+	    keywords.put("getGreen", Kind.COLOR_OP);
+	    keywords.put("getBlue", Kind.COLOR_OP);
+	    
+	    keywords.put("BLACK", Kind.COLOR_CONST);
+	    keywords.put("BLUE", Kind.COLOR_CONST);
+	    keywords.put("CYAN", Kind.COLOR_CONST);
+	    keywords.put("DARK_GRAY", Kind.COLOR_CONST);
+	    keywords.put("GRAY", Kind.COLOR_CONST);
+	    keywords.put("GREEN", Kind.COLOR_CONST);
+	    keywords.put("LIGHT_GRAY", Kind.COLOR_CONST);
+	    keywords.put("MAGENTA", Kind.COLOR_CONST);
+	    keywords.put("ORANGE", Kind.COLOR_CONST);
+	    keywords.put("PINK", Kind.COLOR_CONST);
+	    keywords.put("RED", Kind.COLOR_CONST);
+	    keywords.put("WHITE", Kind.COLOR_CONST);
+	    keywords.put("YELLOW", Kind.COLOR_CONST);
+	    
+	    keywords.put("true", Kind.BOOLEAN_LIT);
+	    keywords.put("false", Kind.BOOLEAN_LIT);
+	    
+	    keywords.put("if", Kind.KW_IF);
+	    keywords.put("else", Kind.KW_ELSE);
+	    keywords.put("fi", Kind.KW_FI);
+	    keywords.put("write", Kind.KW_WRITE);
+	    keywords.put("console", Kind.KW_CONSOLE);
+	    
+	    
+	  }
   
   // Referenced from Lexer Implementation in Java Slides
   private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, 
 	  IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS}
   
+
+
   Lexer(String chars) {
     this.chars = chars;
     
@@ -50,7 +96,21 @@ class Lexer implements ILexer {
 	  }
 	  return null;
   }
-  // Referenced from Crafting Interpreters 4.4
+  
+  // isDigit, isAlpha, and isAlphaNumeric are referenced from Crafting Interpreters 4.4
+  private boolean isAlpha(char c) {
+	    return (c >= 'a' && c <= 'z') ||
+	           (c >= 'A' && c <= 'Z') ||
+	            c == '_';
+	  }
+  private boolean isDigit(char c) {
+	    return c >= '0' && c <= '9';
+  } 
+  
+  private boolean isAlphaNumeric(char c) {
+    return isAlpha(c) || isDigit(c);
+  }
+
   List<Token> scanTokens() {
 	  State state = State.START;
 	  while (true) {
@@ -114,9 +174,28 @@ class Lexer implements ILexer {
 			    		state= State.HAVE_EQ;
 			    		pos++;
 			    	}
-		 			case '0' -> {
+			    	case '0' -> {
+			    		state = State.HAVE_ZERO;
+			    		pos++;
+			    	}
+			    	case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
+			    		state = State.IN_NUM;
+			    		pos++;
+			    	}
+			    	case '-' -> {
+			    		state = State.HAVE_MINUS;
+			    		pos++;
+			    	}
+			    	case 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+			    		 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+			    		 '$', '_' -> {
+			    			 state = State.IN_IDENT;
+			    		 }
+			    		 
+		 			case 0 -> {
 		 				addToken(Kind.EOF);
-		 				pos++;
+		 				lines += 1;
+		 				return tokens;
 		 			}
 		 		}
 		 	}
@@ -127,11 +206,28 @@ class Lexer implements ILexer {
 		 				addToken(Kind.EQUALS);
 		 				pos++;
 		 			}
+		 			case ' ' -> {
+		 				addToken(Kind.ASSIGN);
+		 			}
 		 		}
 		 	}
 		 	
+		 	case IN_NUM -> {
+		 		
+		 	}
+		 	case IN_FLOAT -> {
+		 		
+		 	}
 		 	case IN_IDENT -> {
-		 	
+		 		if (isAlphaNumeric(ch)) {
+		 			pos++;
+		 		}
+		 		
+		 		// Referenced from Crafting Interpreterss 4.4
+		 		String text = chars.substring(start, pos);
+		 	    Kind kind = keywords.get(text);
+		 	    if (kind == null) kind = Kind.IDENT;
+		 	    addToken(kind);
 		 	}
 		 	case HAVE_ZERO -> {
 		 		
@@ -139,12 +235,12 @@ class Lexer implements ILexer {
 		 	case HAVE_DOT -> {
 		 		
 		 	}
+		 	case HAVE_MINUS -> {
+		 		
+		 	}
+		 	
+		 	default -> throw new IllegalStateException("lexer bug");
 		 }
-		 
-		 /*
-	    tokens.add(new Token(EOF, "", null, line));
-	    return tokens;
-	    */
 	  }
   }
 }
