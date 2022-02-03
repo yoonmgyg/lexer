@@ -2,23 +2,21 @@ package edu.ufl.cise.plc;
 public class Token implements IToken {
 	final Kind kind;
 	final String input;
-	final int pos;
+	final SourceLocation loc;
 	final int length;
-	final Object literal;
 
-	Token(Kind kind, String input, int pos, int length, Object literal) {
+	public Token(Kind kind, String input, SourceLocation loc, int length) {
 	    this.kind = kind;
 	    this.input = input;
-	    this.pos = pos;
+	    this.loc = loc;
 	    this.length = length;
-	    this.literal = literal;
 	  }
 
 	
 	public Kind getKind(){return kind;}
     @Override 
     public String getText() {
-        return kind + " " + input + " " + literal;
+        return kind + " " + input;
       }
     @Override  
     public int getIntValue(){
@@ -26,22 +24,18 @@ public class Token implements IToken {
     }
 	@Override
 	public SourceLocation getSourceLocation() {
-		// TODO Auto-generated method stub
-		return null;
+		return loc;
 	}
 	@Override
 	public float getFloatValue() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 	@Override
 	public boolean getBooleanValue() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 	@Override
 	public String getStringValue() {
-		// TODO Auto-generated method stub
-		return null;
+		return input;
 	}
 }
