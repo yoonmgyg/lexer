@@ -1,5 +1,4 @@
-import edu.ufl.cise.plc.*;
-
+package edu.ufl.cise.plc;
 public class Token implements IToken {
 	final Kind kind;
 	final String input;
