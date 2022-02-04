@@ -88,7 +88,9 @@ class Lexer implements ILexer {
 	  if (!tokens.isEmpty()) {
 		  return tokens.remove(0);
 	  }
-	  return null;
+
+	  scanTokens();
+	  return tokens.remove(0);
   }
 
   @Override
@@ -96,7 +98,10 @@ class Lexer implements ILexer {
 	  if (!tokens.isEmpty()) {
 		  return tokens.get(0);
 	  }
-	  return null;
+	  else {
+		  scanTokens();
+		  return tokens.get(0);
+	  }
   }
   
   // isDigit, isAlpha, and isAlphaNumeric are referenced from Crafting Interpreters 4.4
@@ -122,9 +127,7 @@ class Lexer implements ILexer {
 		 	case START -> {
 		 		start = pos;
 		 		switch(ch) {
-		 			case ' ', '\t', '\r' -> {pos++;}
-		 			case '\n' -> {
-		 				state = State.NEW_LINE;
+		 			case ' ', '\t', '\r', '\n'-> {
 		 			}
 		 			case '#' -> {
 		 				state = State.HAVE_HASH;
@@ -204,7 +207,6 @@ class Lexer implements ILexer {
 			    		 
 		 			case 0 -> {
 		 				addToken(Kind.EOF);
-		 				lines += 1;
 		 				return;
 		 			}
 		 		}
@@ -220,6 +222,11 @@ class Lexer implements ILexer {
 		 				addToken(Kind.ASSIGN);
 		 				return;
 		 			}
+
+		 			case 0 -> {
+		 				addToken(Kind.EOF);
+		 				return;
+		 			}
 		 		}
 		 	}
 		 	
@@ -230,23 +237,46 @@ class Lexer implements ILexer {
                 case '.' -> {
                     state = State.HAVE_DOT;
                 }
+
+	 			case 0 -> {
+	 				addToken(Kind.EOF);
+	 				return;
+	 			}
                 default -> {
                     addToken(Kind.INT_LIT);
-                    state = State.START;
+                    return;
 		 		}
             }
 		 
 		 		
 		 	}
 		 	case IN_FLOAT -> {
-		 		addToken(Kind.INT_LIT);
+		 		switch(ch) {
+				 	case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
+		            }
+
+		 			case 0 -> {
+		 				addToken(Kind.EOF);
+		 				return;
+		 			}
+		 			
+			 		default -> {
+			 			addToken(Kind.INT_LIT);
+			 			return;
+			 			}
+		 		}
 		 	}
 		 	case IN_IDENT -> {
 		 		switch(ch) {
 			 		case '\n' -> {
-			 			state = State.START;
-			 			lines++;
+			 			
 			 		}
+
+		 			case 0 -> {
+		 				addToken(Kind.EOF);
+		 				return;
+		 			}
+		 			
 			 		default -> {
 				 		if (isAlphaNumeric(ch)) {
 				 			
@@ -277,6 +307,12 @@ class Lexer implements ILexer {
 			 			return;
 			 			
 			 		}
+
+		 			case 0 -> {
+		 				addToken(Kind.EOF);
+		 				return;
+		 			}
+		 			
 			 		default -> {
 			 			addToken(Kind.MINUS);
 			 			return;
@@ -297,6 +333,14 @@ class Lexer implements ILexer {
 			 			addToken(Kind.LE);
 			 			return;
 			 		}
+
+		 			case 0 -> {
+		 				addToken(Kind.EOF);
+		 				return;
+		 			}
+		 			default -> {
+		 				addToken(Kind.LT);
+		 			}
 		 		}
 		 	}
 		 	case HAVE_RROW -> {
@@ -309,6 +353,15 @@ class Lexer implements ILexer {
 			 			addToken(Kind.GE);
 			 			return;
 			 		}
+
+		 			case 0 -> {
+		 				addToken(Kind.EOF);
+		 				return;
+		 			}
+		 			
+			 		default -> {
+			 			addToken(Kind.GT);
+			 		}
 			 		
 		 		}
 		 	}
@@ -318,12 +371,17 @@ class Lexer implements ILexer {
 		 				return;
 		 			}
 		 			default -> {
+		 				return;
 		 			}
 		 		}
 		 	}
+		 	/*
 		 	case NEW_LINE -> {
-		 		
+		 		lines += 1;
+		 		columns = 0;
+		 		return;
 		 	}
+		 	*/
 		 	default -> throw new IllegalStateException("lexer bug");
 		 }
 	  }
