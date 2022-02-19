@@ -46,7 +46,11 @@ public class Token implements IToken {
 	@Override
 	public String getStringValue() {
 		if (kind == Kind.STRING_LIT) {
-			return input;
+			String parsedInput = input.replaceAll("\\n", "\n");
+			parsedInput = parsedInput.replaceAll("\\t", "\t");
+			parsedInput = parsedInput.replaceAll("\\t", "\r");
+			
+			return parsedInput;
 		}
 		return "";
 	}

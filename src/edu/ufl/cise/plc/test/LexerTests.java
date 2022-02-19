@@ -152,7 +152,7 @@ public class LexerTests {
 		show(input);
 		ILexer lexer = getLexer(input);
 		checkToken(lexer.next(),Kind.ASSIGN,0,0);
-		checkToken(lexer.next(),Kind.EQUALS,0,2);
+		checkToken(lexer.next(),Kind.EQUALS,0,2);	
 		checkToken(lexer.next(),Kind.EQUALS,0,5);
 		checkToken(lexer.next(),Kind.ASSIGN,0,7);
 		checkEOF(lexer.next());
