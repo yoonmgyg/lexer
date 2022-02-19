@@ -2,7 +2,7 @@ package edu.ufl.cise.plc;
 
 import edu.ufl.cise.plc.Token;
 import edu.ufl.cise.plc.IToken.Kind;
-import edu.ufl.cise.plc.ast.*;
+import edu.ufl.cise.plc.ast.Expr;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,25 +10,13 @@ import java.util.List;
 public class Parser implements IParser {
 	private final List<Token> tokens;
 	private int current = 0;
-	private IToken t;
+	private Token t;
   
 	Parser(List<Token> tokens) {
 		this.tokens = tokens;
 	}
   
 	// Referenced from Parsing 4
-	protected boolean isKind(Kind kind) {
-		return t.getKind() == kind;
-	}
-  
-	protected boolean isKind(Kind... kinds) {
-		for (Kind k: kinds){
-			if (k == t.getKind()) {
-				return true;
-			}	
-		}
-		return false;
-	}
 
 	//Referenced from Crafting Interpreters 6.2
 	private Token peek() {
@@ -49,47 +37,58 @@ public class Parser implements IParser {
 	//Referenced from Crafting Interpreters 6.2
 	private Token consume() {
 		if (!isAtEnd()) current++;
-		t = tokens.get(current);
+		t = peek();
 		return previous();
 	}
 	
+
+	protected boolean isKind(Kind... kinds) {
+		for (Kind k: kinds){
+			if (k == t.getKind()) {
+				consume();
+				return true;
+			}	
+		}
+		return false;
+	}
+	
 	//expression
-	private Expr expr() {
-		Expr e = cond();
-		if (cond() != null) {
-			return e;
-		}
-		else {
+	private Expr expression() throws SyntaxException{
+		Expr e = condition();
+		if (e == null) {
 			e = or();
-			return e;
 		}
+		if (e == null) {
+			throw new SyntaxException("Invaid syntax");
+		}
+		return e;
 	}
 	
 	
 	// conditional
-	private Expr cond() throws SyntaxException {
+	private Expr condition() throws SyntaxException {
+		Expr e = null;
 		if (isKind(Kind.KW_IF)) {
-			consume();
-			if (isKind(Kind.LPAREN)) {
-				consume();
-				Expr e = null;
-				e = expr();
-				if (isKind(Kind.RPAREN)) {
-					e = expr();
-					if (isKind(Kind.KW_ELSE)) {
-						e = expr();
-						if (isKind(Kind.KW_FI)) {
-							return e;
-						}
-					}
-				}
-			}
-			throw new SyntaxException("Invalid conditional");
+			isKind(Kind.LPAREN);
+			e = expression();
+			isKind(Kind.RPAREN);
+			e = expression();
+			isKind(Kind.KW_ELSE);
+			e = expression();
+			isKind(Kind.KW_FI);
+			e = new ConditionalExpr(t);
 		}
-		return null;
+		return e;
 	}
 
 	private Expr or() throws SyntaxException {
+		Expr e = and();
+		while (isKind(Kind.OR))) {
+			Token operator = previous();
+			Expr right =  and();
+			e = new BinaryExpr(e, operator, right);
+		}
+		return e;
 	}
 	   /*
 		
