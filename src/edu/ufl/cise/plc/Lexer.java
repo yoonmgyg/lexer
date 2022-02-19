@@ -3,6 +3,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.math.BigInteger;
+import java.math.BigDecimal;
 
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.IToken.SourceLocation;
@@ -11,10 +13,9 @@ class Lexer implements ILexer {
   private final String chars;
   private final List<Token> tokens = new ArrayList<>();
   private int start = 0;
-  private int pos = 0;
+  private int pos = -1;
   private int columns = 0;
-  private int lines = 1;
-  private Kind last_kind;
+  private int lines = 0;
   
   private static final Map<String, Kind> keywords;
   static {
@@ -62,7 +63,7 @@ class Lexer implements ILexer {
   
   // Referenced from Lexer Implementation in Java Slides
   private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, 
-	  IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS, HAVE_HASH, HAVE_LROW, HAVE_RROW, NEW_LINE}
+	  IN_FLOAT, IN_NUM, IN_STR, HAVE_EQ, HAVE_MINUS, HAVE_HASH, HAVE_LROW, HAVE_RROW, }
   
 
 
@@ -73,64 +74,57 @@ class Lexer implements ILexer {
 
   // Referenced from Crafting Interpreters 4.4
   private boolean isAtEnd() {
-	  return pos >= chars.length();
+	  return pos >= chars.length() - 1;
   }
 
-  // Referenced from Crafting Interpreters 4.4
+  
   private void addToken(Kind kind) {
     String text = chars.substring(start, pos);
-    SourceLocation loc = new SourceLocation(lines, columns);
-    tokens.add(new Token(kind, text, loc, pos - start));
+    System.out.println(text);
+    int length = pos - start;
+    System.out.println(kind);
+    tokens.add(new Token(kind, text, new SourceLocation(lines, columns - (length + 1)), length));
   }
 
   @Override
   public IToken next() throws LexicalException {
-	  if (!tokens.isEmpty()) {
-		  return tokens.remove(0);
+	  while (tokens.isEmpty()) {
+		  scanTokens();
 	  }
-
-	  scanTokens();
 	  return tokens.remove(0);
   }
 
   @Override
   public IToken peek() throws LexicalException {
-	  if (!tokens.isEmpty()) {
-		  return tokens.get(0);
-	  }
-	  else {
+	  if (tokens.isEmpty()) {
 		  scanTokens();
-		  return tokens.get(0);
 	  }
+	  return tokens.get(0);
   }
   
-  // isDigit, isAlpha, and isAlphaNumeric are referenced from Crafting Interpreters 4.4
-  private boolean isAlpha(char c) {
-	    return (c >= 'a' && c <= 'z') ||
-	           (c >= 'A' && c <= 'Z') ||
-	            c == '_';
-	  }
-  private boolean isDigit(char c) {
-	    return c >= '0' && c <= '9';
-  } 
-  
-  private boolean isAlphaNumeric(char c) {
-    return isAlpha(c) || isDigit(c);
-  }
-
-  private void scanTokens() {
+  private void scanTokens() throws LexicalException {
 	  State state = State.START;
 	  while (true) {
+		 if (isAtEnd()) {
+			  pos++;
+			  addToken(Kind.EOF);
+			  return;
+		 }
+		 
 		 char ch = chars.charAt(++pos);
-		 columns++;
+		 ++columns;
+		 System.out.println("ch: " + ch);
+		 System.out.println("state: " + state);
 		 switch (state) {
 		 	case START -> {
 		 		start = pos;
 		 		switch(ch) {
-		 			case ' ', '\t', '\r', '\n'-> {
+		 			case ' ', '\t', '\r' -> {
 		 			}
-		 			case '#' -> {
-		 				state = State.HAVE_HASH;
+		 			case '\n' -> {
+		 				lines++;
+		 				columns = 0;
+		 				
 		 			}
 		 			case '+' -> {
 		 				addToken(Kind.PLUS);
@@ -182,33 +176,30 @@ class Lexer implements ILexer {
 		 				return;
 		 			}
 
+		 			case '#' -> {
+		 				state = State.HAVE_HASH;
+		 			}
+		 			case '"' -> {
+		 				state = State.IN_STR;
+		 			}
 			    	case '=' -> {
 			    		state= State.HAVE_EQ;
-			    		return;
 			    	}
 			    	case '0' -> {
 			    		state = State.HAVE_ZERO;
-			    		return;
 			    	}
 			    	case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
 			    		state = State.IN_NUM;
-			    		return;
 			    	}
 			    	case '-' -> {
 			    		state = State.HAVE_MINUS;
-			    		return;
 			    	}
 			    	case 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 			    		 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 			    		 '$', '_' -> {
 			    			 state = State.IN_IDENT;
-			    			 return;
-			    		 }
-			    		 
-		 			case 0 -> {
-		 				addToken(Kind.EOF);
-		 				return;
-		 			}
+			    	}	 
+			    	default -> throw new LexicalException("invalid character");
 		 		}
 		 	}
 		 	
@@ -218,50 +209,63 @@ class Lexer implements ILexer {
 		 				addToken(Kind.EQUALS);
 		 				return;
 		 			}
-		 			case ' ' -> {
+		 			default -> {
 		 				addToken(Kind.ASSIGN);
+		 				--pos;
+		 				--columns;
 		 				return;
 		 			}
 
-		 			case 0 -> {
-		 				addToken(Kind.EOF);
-		 				return;
-		 			}
 		 		}
 		 	}
 		 	
 		 	case IN_NUM -> {
 		 		switch (ch) { //int_lit can only start with 1-9 so check for that
-                case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
-                }
-                case '.' -> {
-                    state = State.HAVE_DOT;
-                }
-
-	 			case 0 -> {
-	 				addToken(Kind.EOF);
-	 				return;
-	 			}
-                default -> {
-                    addToken(Kind.INT_LIT);
-                    return;
+	                case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
+	                }
+	                case '.' -> {
+	                    state = State.HAVE_DOT;
+	                }
+	                default -> {
+	                	BigInteger val = new BigInteger(chars.substring(start, pos));
+	                	BigInteger maxVal = BigInteger.valueOf(Integer.MAX_VALUE);
+	                	if (val.compareTo(maxVal) > 0) {
+	                		throw new LexicalException("Int is too large");
+	                	}
+	                	
+	                    addToken(Kind.INT_LIT);
+	                    --pos;
+	                    --columns;
+	                    return;
+			 		}
 		 		}
-            }
-		 
-		 		
+		 	}
+		 	
+		 	case IN_STR -> {
+		 		switch(ch) {
+		 			case '"' -> {
+		 				addToken(Kind.STRING_LIT);
+		 				return;
+		 			}
+		 			case 0 -> {
+                		throw new LexicalException("String is not complete");
+		 			}
+		 		}
 		 	}
 		 	case IN_FLOAT -> {
 		 		switch(ch) {
 				 	case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
 		            }
-
-		 			case 0 -> {
-		 				addToken(Kind.EOF);
-		 				return;
-		 			}
 		 			
 			 		default -> {
-			 			addToken(Kind.INT_LIT);
+	                	BigDecimal val = new BigDecimal(chars.substring(start, pos));
+	                	BigDecimal maxVal = BigDecimal.valueOf(Float.MAX_VALUE);
+	                	if (val.compareTo(maxVal) > 0) {
+	                		throw new LexicalException("Float is too large");
+	                	}
+	                    addToken(Kind.FLOAT_LIT);
+	                    --pos;
+	                    --columns;
 			 			return;
 			 			}
 		 		}
@@ -269,36 +273,56 @@ class Lexer implements ILexer {
 		 	case IN_IDENT -> {
 		 		switch(ch) {
 			 		case '\n' -> {
-			 			
+			 			String text = chars.substring(start, pos);
+				 	    Kind kind = keywords.get(text);
+				 	    if (kind == null) kind = Kind.IDENT;
+				 	    addToken(kind);
+			 			lines++;
+			 			columns = 0;
+				 	    return;
 			 		}
-
-		 			case 0 -> {
-		 				addToken(Kind.EOF);
-		 				return;
-		 			}
+			 		
+			 		case 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+		    		 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+		    		 '$', '_', '0', '1', '2', '3', '4', '5', '6', '7', '9' -> {
+		    			 state = State.IN_IDENT;
+		    		 }	
 		 			
 			 		default -> {
-				 		if (isAlphaNumeric(ch)) {
-				 			
-				 		}
+			 			String text = chars.substring(start, pos);
+				 	    Kind kind = keywords.get(text);
+				 	    if (kind == null) kind = Kind.IDENT;
+				 	    addToken(kind);
+				 	    --pos;
+				 	    --columns;
+				 	    return;
 			 		}
 		 		}
 		 		
-		 		// Referenced from Crafting Interpreterss 4.4
-		 		String text = chars.substring(start, pos);
-		 	    Kind kind = keywords.get(text);
-		 	    if (kind == null) kind = Kind.IDENT;
-		 	    addToken(kind);
-		 	    return;
 		 	}
 		 	case HAVE_ZERO -> {
+			 	switch(ch) {
+			 		case '.' -> {
+			 			state = State.HAVE_DOT;
+			 		}
+			 		default -> {
+			 			addToken(Kind.INT_LIT);
+				 	    --pos;
+				 	    --columns;
+				 	    return;
+			 		}
+		 		}
 		 		
 		 	}
 		 	case HAVE_DOT -> {
-		 		 if(ch > 0){
-                     addToken(Kind.INT_LIT);
-                     state = State.IN_FLOAT;
-                 }
+		 		switch (ch) {
+		 			case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
+		 				state = State.IN_FLOAT;
+		 			}
+		 			default -> {
+		 				throw new LexicalException("Float is not complete");
+		 			}
+		 		}
 		 	}
 		 	case HAVE_MINUS -> {
 			 	switch(ch) {
@@ -307,11 +331,7 @@ class Lexer implements ILexer {
 			 			return;
 			 			
 			 		}
-
-		 			case 0 -> {
-		 				addToken(Kind.EOF);
-		 				return;
-		 			}
+		 			
 		 			
 			 		default -> {
 			 			addToken(Kind.MINUS);
@@ -333,11 +353,7 @@ class Lexer implements ILexer {
 			 			addToken(Kind.LE);
 			 			return;
 			 		}
-
-		 			case 0 -> {
-		 				addToken(Kind.EOF);
-		 				return;
-		 			}
+			 		
 		 			default -> {
 		 				addToken(Kind.LT);
 		 			}
@@ -353,14 +369,10 @@ class Lexer implements ILexer {
 			 			addToken(Kind.GE);
 			 			return;
 			 		}
-
-		 			case 0 -> {
-		 				addToken(Kind.EOF);
-		 				return;
-		 			}
 		 			
 			 		default -> {
 			 			addToken(Kind.GT);
+			 			return;
 			 		}
 			 		
 		 		}
@@ -368,21 +380,14 @@ class Lexer implements ILexer {
 		 	case HAVE_HASH -> {
 		 		switch(ch) {
 		 			case '\n', 0 -> {
+		 				lines++;
+		 				columns = 0;
 		 				return;
 		 			}
 		 			default -> {
-		 				return;
 		 			}
 		 		}
 		 	}
-		 	/*
-		 	case NEW_LINE -> {
-		 		lines += 1;
-		 		columns = 0;
-		 		return;
-		 	}
-		 	*/
-		 	default -> throw new IllegalStateException("lexer bug");
 		 }
 	  }
   }

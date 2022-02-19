@@ -16,7 +16,7 @@ public class Token implements IToken {
 	public Kind getKind(){return kind;}
     @Override 
     public String getText() {
-        return kind + " " + input;
+        return input;
       }
     @Override  
     public int getIntValue(){
