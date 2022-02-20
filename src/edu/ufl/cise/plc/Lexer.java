@@ -61,6 +61,9 @@ class Lexer implements ILexer {
 	    
 	  }
   
+  public List<Token> getTokens() {
+	  return tokens;
+  }
   // Referenced from Lexer Implementation in Java Slides
   private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, 
 	  IN_FLOAT, IN_NUM, IN_STR, HAVE_EQ, HAVE_MINUS, HAVE_HASH, HAVE_LROW, HAVE_RROW, }
@@ -80,9 +83,7 @@ class Lexer implements ILexer {
   
   private void addToken(Kind kind) {
     String text = chars.substring(start, pos);
-    System.out.println(text);
     int length = pos - start;
-    System.out.println(kind);
     tokens.add(new Token(kind, text, new SourceLocation(lines, columns - (length + 1)), length));
   }
 
@@ -113,8 +114,6 @@ class Lexer implements ILexer {
 		 
 		 char ch = chars.charAt(++pos);
 		 ++columns;
-		 System.out.println("ch: " + ch);
-		 System.out.println("state: " + state);
 		 switch (state) {
 		 	case START -> {
 		 		start = pos;
