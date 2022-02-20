@@ -2,7 +2,6 @@ package edu.ufl.cise.plc;
 
 import edu.ufl.cise.plc.Token;
 import edu.ufl.cise.plc.IToken.Kind;
-import edu.ufl.cise.plc.ast.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,12 +41,8 @@ public class Parser implements IParser {
 	
 
 	// Referenced from Parsing 4
-	protected boolean isKind(Kind... kinds) {
-	    for (Kind k : kinds) {
-	       if (k == t.getKind())
-	       return true;
-	    }
-	    return false;
+	protected boolean isKind(Kind kind) {
+	    return t.getKind() == kind;
 	}
 	
 	protected boolean match(Kind... kinds) throws SyntaxException {
@@ -57,7 +52,7 @@ public class Parser implements IParser {
 				return true;
 			}	
 		}
-		return false;
+		throw new SyntaxException("match error");
 	}
 	
 	//expression
@@ -138,13 +133,60 @@ public class Parser implements IParser {
 	}
 	
 	private Expr unary() {
-		while (match(Kind.BANG, Kind.MINUS, Kind.COLOR_OP, Kind.IMAGE_OP)) {
+		Expr e = null;
+		if (isKind(Kind.BANG) || isKind(Kind.MINUS) || isKind(Kind.COLOR_OP) ||  isKind(Kind.IMAGE_OP)) {
+			match(Kind.BANG, Kind.MINUS, Kind.COLOR_OP, Kind.IMAGE_OP);
 			Token operator = previous();
 			Expr right =  unary();
-			e = new BinaryExpr(e, operator, right);
+			e = new UnaryExpr(e, operator, right);
+		}
+		else {
+			e = postFix();
 		}
 		return e;
+		
 	}
+	
+	private Expr postFix() {
+		Expr e = PrimaryExpr();
+		return e;
+		
+	}
+	
+	private Expr PrimaryExpr(){
+		Expr e;
+        if(isKind(Kind.FLOAT_LIT)){
+            e = FloatLitExpr();
+        }
+        else if(isKind(BOOLEAN_LIT)){
+            e = BoolLitExpr();
+        }
+        else if(isKind(Kind.STRING_LIT)){
+            e = StringLitExpr();
+        }
+        else if(isKind(Kind.IDENT)){
+            e = IdentExpr();
+        }
+        else {
+			match(Kind.LPAREN);
+			e = expr();
+			match(Kind.RPAREN);
+			e = PrimaryExpr();
+        }
+        return e;
+    }
+	
+	private Expr pixelSelector() {
+		Expr e;
+		match(Kind.LSQUARE);
+		e = expr();
+		match(Kind.COMMA);
+		e = expr();
+		match(Kind.RSQUARE);
+		e = new PixelSelectorExpr();
+		return e;
+		
+	}	
 	   /*
 		
 	  public Expr factor() {   
@@ -174,7 +216,7 @@ public class Parser implements IParser {
 	    */
 	
 	@Override
-	public ASTNode parse() throws PLCException {\
+	public ASTNode parse() throws PLCException {
 		return null;
 	}
 }
