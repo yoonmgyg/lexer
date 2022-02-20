@@ -2,7 +2,7 @@ package edu.ufl.cise.plc;
 
 import edu.ufl.cise.plc.Token;
 import edu.ufl.cise.plc.IToken.Kind;
-import edu.ufl.cise.plc.ast.Expr;
+import edu.ufl.cise.plc.ast.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +16,6 @@ public class Parser implements IParser {
 		this.tokens = tokens;
 	}
   
-	// Referenced from Parsing 4
 
 	//Referenced from Crafting Interpreters 6.2
 	private Token peek() {
@@ -42,7 +41,16 @@ public class Parser implements IParser {
 	}
 	
 
+	// Referenced from Parsing 4
 	protected boolean isKind(Kind... kinds) {
+	    for (Kind k : kinds) {
+	       if (k == t.getKind())
+	       return true;
+	    }
+	    return false;
+	}
+	
+	protected boolean match(Kind... kinds) throws SyntaxException {
 		for (Kind k: kinds){
 			if (k == t.getKind()) {
 				consume();
@@ -53,39 +61,86 @@ public class Parser implements IParser {
 	}
 	
 	//expression
-	private Expr expression() throws SyntaxException{
+	private Expr expr() {
 		Expr e = condition();
 		if (e == null) {
 			e = or();
-		}
-		if (e == null) {
-			throw new SyntaxException("Invaid syntax");
 		}
 		return e;
 	}
 	
 	
 	// conditional
-	private Expr condition() throws SyntaxException {
+	private Expr cond() {
 		Expr e = null;
-		if (isKind(Kind.KW_IF)) {
-			isKind(Kind.LPAREN);
-			e = expression();
-			isKind(Kind.RPAREN);
-			e = expression();
-			isKind(Kind.KW_ELSE);
-			e = expression();
-			isKind(Kind.KW_FI);
+		if (match(Kind.KW_IF)) {
+			match(Kind.LPAREN);
+			e = expr();
+			match(Kind.RPAREN);
+			e = expr();
+			match(Kind.KW_ELSE);
+			e = expr();
+			match(Kind.KW_FI);
 			e = new ConditionalExpr(t);
 		}
 		return e;
 	}
 
-	private Expr or() throws SyntaxException {
+	private Expr or() {
 		Expr e = and();
-		while (isKind(Kind.OR))) {
+		while (match(Kind.OR)) {
 			Token operator = previous();
 			Expr right =  and();
+			e = new BinaryExpr(e, operator, right);
+		}
+		return e;
+	}
+	
+	private Expr and() {
+		Expr e = comp();
+		while (match(Kind.AND)) {
+			Token operator = previous();
+			Expr right =  comp();
+			e = new BinaryExpr(e, operator, right);
+		}
+		return e;
+	}
+	
+	private Expr comp() {
+		Expr e = add();
+		while (match(Kind.GT, Kind.LT, Kind.LE, Kind.GE, Kind.EQUALS, Kind.NOT_EQUALS)) {
+			Token operator = previous();
+			Expr right =  add();
+			e = new BinaryExpr(e, operator, right);
+		}
+		return e;
+	}
+	
+	private Expr add() {
+		Expr e = mult();
+		while (match(Kind.PLUS, Kind.MINUS)) {
+			Token operator = previous();
+			Expr right =  mult();
+			e = new BinaryExpr(e, operator, right);
+		}
+		return e;
+	}
+	
+
+	private Expr mult() {
+		Expr e = unary();
+		while (match(Kind.TIMES, Kind.DIV, Kind.MOD)) {
+			Token operator = previous();
+			Expr right =  unary();
+			e = new BinaryExpr(e, operator, right);
+		}
+		return e;
+	}
+	
+	private Expr unary() {
+		while (match(Kind.BANG, Kind.MINUS, Kind.COLOR_OP, Kind.IMAGE_OP)) {
+			Token operator = previous();
+			Expr right =  unary();
 			e = new BinaryExpr(e, operator, right);
 		}
 		return e;
@@ -95,11 +150,11 @@ public class Parser implements IParser {
 	  public Expr factor() {   
 		  IToken firstToken = t;
 		  Expr e = null;
-		  if (isKind(INT_LIT)){
+		  if (match(INT_LIT)){
 			  e = new IntLitExpr(firstToken);
 		      consume();
 		  } 
-		  else if (isKind(LPAREN))){
+		  else if (match(LPAREN))){
 			consume(); 
 		    e = expr(); 
 		    match(RPAREN); 
@@ -110,11 +165,11 @@ public class Parser implements IParser {
 	  
 	  private void term() {
 		  factor();
-		  while (isKind(Kind.TIMES, Kind.DIV)) {consume(); term();};
+		  while (match(Kind.TIMES, Kind.DIV)) {consume(); term();};
 	  }
 	  public void expr() {
 		  term();
-		  while(isKind(Kind.PLUS, Kind.MINUS)) {consume(); term();}
+		  while(match(Kind.PLUS, Kind.MINUS)) {consume(); term();}
 	  }
 	    */
 	
