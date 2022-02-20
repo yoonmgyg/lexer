@@ -44,14 +44,20 @@ public class Token implements IToken {
 		return false;
 	}
 	@Override
+
 	public String getStringValue() {
 		if (kind == Kind.STRING_LIT) {
-			String parsedInput = input.replaceAll("\\n", "\n");
-			parsedInput = parsedInput.replaceAll("\\t", "\t");
-			parsedInput = parsedInput.replaceAll("\\t", "\r");
-			
+			String parsedInput = input.replace("\n", "\\n");
+			parsedInput = parsedInput.replace("\t", "\\t");
+			parsedInput = parsedInput.replace("\r", "\\r");
+			parsedInput = parsedInput.replace("\f", "\\f");
+			parsedInput = parsedInput.replace("\b", "\\b");
+			parsedInput = parsedInput.replace("\\'", "\'");
+			parsedInput = parsedInput.replace("\\\"", "\"");
+			parsedInput = parsedInput.replace("\\", "\\\\");
 			return parsedInput;
 		}
 		return "";
 	}
+	
 }

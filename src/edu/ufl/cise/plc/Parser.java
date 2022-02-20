@@ -14,6 +14,7 @@ public class Parser implements IParser {
   
 	Parser(List<Token> tokens) {
 		this.tokens = tokens;
+
 	}
   
 
@@ -53,7 +54,7 @@ public class Parser implements IParser {
 				return true;
 			}	
 		}
-		throw new SyntaxException("match error");
+		return false;
 	}
 	
 	//expression
@@ -68,9 +69,9 @@ public class Parser implements IParser {
 	
 	// conditional
 	private Expr cond() throws SyntaxException {
-		Token firstToken = tokens.get(0);
+		Token firstToken = tokens.get(current);
 		Expr e = null;
-		if (match(Kind.KW_IF)) {
+		if(match(Kind.KW_IF)) {
 			match(Kind.LPAREN);
 			Expr condition = expr();
 			match(Kind.RPAREN);
@@ -204,6 +205,7 @@ public class Parser implements IParser {
 	
 	@Override
 	public ASTNode parse() throws PLCException {
+		t = peek();
 	    ASTNode e = expr(); 
 	    return e; 
 	}

@@ -9,8 +9,9 @@ public class CompilerComponentFactory {
 		return new Lexer(input);
 	}
 
-	public static IParser getParser(String input) {
-		return new Parser(new Lexer(input).getTokens());
+	public static IParser getParser(String input) throws LexicalException{
+		Lexer newLexer = new Lexer(input);
+		return new Parser(newLexer.getTokens());
 	}
 	
 }

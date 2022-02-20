@@ -61,9 +61,9 @@ class Lexer implements ILexer {
 	    
 	  }
   
-  public List<Token> getTokens() {
-	  return tokens;
-  }
+  
+  
+
   // Referenced from Lexer Implementation in Java Slides
   private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, 
 	  IN_FLOAT, IN_NUM, IN_STR, HAVE_EQ, HAVE_MINUS, HAVE_HASH, HAVE_LROW, HAVE_RROW, }
@@ -74,6 +74,15 @@ class Lexer implements ILexer {
     this.chars = chars;
     
   }
+
+
+	public List<Token> getTokens() throws LexicalException {
+		  while (!isAtEnd()) {
+			  scanTokens();
+		  }
+
+		  return tokens;
+	}
 
   // Referenced from Crafting Interpreters 4.4
   private boolean isAtEnd() {
@@ -390,6 +399,4 @@ class Lexer implements ILexer {
 		 }
 	  }
   }
-}
-
-;
+};
