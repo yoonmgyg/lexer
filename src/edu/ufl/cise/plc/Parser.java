@@ -145,6 +145,21 @@ public class Parser implements IParser {
 		}
 		return e;
 	}
+	
+	 public void PrimaryExpr(){
+        if(isKind(FLOAT_LIT)){
+            return FloatLitExpr();
+        }
+        else if(isKind(BOOLEAN_LIT)){
+            return BoolLitExpr();
+        }
+        else if(isKind(STRING_LIT)){
+            return StringLitExpr();
+        }
+        else if(isKind(IDENT)){
+            return IdentExpr();
+        }
+        }
 	   /*
 		
 	  public Expr factor() {   
