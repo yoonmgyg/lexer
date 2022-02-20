@@ -149,15 +149,19 @@ public class Parser implements IParser {
 	private Expr PrimaryExpr(){
         if(isKind(FLOAT_LIT)){
             return FloatLitExpr();
+	    consume(); //consume token when you're done with it
         }
         else if(isKind(BOOLEAN_LIT)){
-            return BoolLitExpr();
+            return BooleanLitExpr();
+	    consume();
         }
         else if(isKind(STRING_LIT)){
             return StringLitExpr();
+	    consume();
         }
         else if(isKind(IDENT)){
             return IdentExpr();
+	    consume();
         }
         }
 	   /*
