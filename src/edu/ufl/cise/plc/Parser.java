@@ -146,7 +146,7 @@ public class Parser implements IParser {
 		return e;
 	}
 	
-	 public void PrimaryExpr(){
+	private Expr PrimaryExpr(){
         if(isKind(FLOAT_LIT)){
             return FloatLitExpr();
         }
