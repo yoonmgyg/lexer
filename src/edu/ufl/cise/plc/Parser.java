@@ -70,13 +70,13 @@ public class Parser implements IParser {
 		Expr e = null;
 		if (match(Kind.KW_IF)) {
 			match(Kind.LPAREN);
-			e = expr();
+			Expr condition Token = expr();
 			match(Kind.RPAREN);
-			e = expr();
+			Expr trueCase = expr();
 			match(Kind.KW_ELSE);
-			e = expr();
+			Expr falseCase = expr();
 			match(Kind.KW_FI);
-			e = new ConditionalExpr(t);
+			e = new ConditionalExpr(condition, trueCase, falseCase);
 		}
 		return e;
 	}
@@ -137,8 +137,8 @@ public class Parser implements IParser {
 		if (isKind(Kind.BANG) || isKind(Kind.MINUS) || isKind(Kind.COLOR_OP) ||  isKind(Kind.IMAGE_OP)) {
 			match(Kind.BANG, Kind.MINUS, Kind.COLOR_OP, Kind.IMAGE_OP);
 			Token operator = previous();
-			Expr right =  unary();
-			e = new UnaryExpr(e, operator, right);
+			e =  unary();
+			e = new UnaryExpr(op, e);
 		}
 		else {
 			e = postFix();
@@ -157,63 +157,41 @@ public class Parser implements IParser {
 		Expr e;
         if(isKind(Kind.FLOAT_LIT)){
             e = FloatLitExpr();
+            match(Kind.FLOAT_LIT);
         }
         else if(isKind(BOOLEAN_LIT)){
             e = BoolLitExpr();
+            match(Kind.BOOLEAN_LIT);
         }
         else if(isKind(Kind.STRING_LIT)){
             e = StringLitExpr();
+            match(Kind.STRING_LIT);
         }
         else if(isKind(Kind.IDENT)){
             e = IdentExpr();
+            match(Kind.STRING_LIT);
+            
         }
         else {
 			match(Kind.LPAREN);
 			e = expr();
 			match(Kind.RPAREN);
-			e = PrimaryExpr();
+			Expr selector = PrimaryExpr();
+			e = UnaryExprPostfix(e, selector);
         }
         return e;
     }
 	
 	private Expr pixelSelector() {
-		Expr e;
 		match(Kind.LSQUARE);
-		e = expr();
+		Expr x = expr();
 		match(Kind.COMMA);
-		e = expr();
+		Expr y = expr();
 		match(Kind.RSQUARE);
-		e = new PixelSelectorExpr();
+		Expr e = new PixelSelectorExpr(x, y);
 		return e;
 		
-	}	
-	   /*
-		
-	  public Expr factor() {   
-		  IToken firstToken = t;
-		  Expr e = null;
-		  if (match(INT_LIT)){
-			  e = new IntLitExpr(firstToken);
-		      consume();
-		  } 
-		  else if (match(LPAREN))){
-			consume(); 
-		    e = expr(); 
-		    match(RPAREN); 
-		  }
-		  else error();
-		  return e;
-	  }
-	  
-	  private void term() {
-		  factor();
-		  while (match(Kind.TIMES, Kind.DIV)) {consume(); term();};
-	  }
-	  public void expr() {
-		  term();
-		  while(match(Kind.PLUS, Kind.MINUS)) {consume(); term();}
-	  }
-	    */
+	}
 	
 	@Override
 	public ASTNode parse() throws PLCException {
