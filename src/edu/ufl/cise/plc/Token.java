@@ -47,6 +47,7 @@ public class Token implements IToken {
 
 	public String getStringValue() {
 		if (kind == Kind.STRING_LIT) {
+			/*
 			String parsedInput = input.replace("\n", "\\n");
 			parsedInput = parsedInput.replace("\t", "\\t");
 			parsedInput = parsedInput.replace("\r", "\\r");
@@ -56,6 +57,8 @@ public class Token implements IToken {
 			parsedInput = parsedInput.replace("\\\"", "\"");
 			parsedInput = parsedInput.replace("\\", "\\\\");
 			return parsedInput;
+			*/
+			return input;
 		}
 		return "";
 	}

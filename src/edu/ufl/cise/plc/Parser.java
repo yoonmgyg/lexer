@@ -36,8 +36,10 @@ public class Parser implements IParser {
 
 	//Referenced from Crafting Interpreters 6.2
 	private Token consume() {
-		if (!isAtEnd()) current++;
-		t = peek();
+		if (!isAtEnd()) {
+			current++;
+			t = peek();
+		}
 		return previous();
 	}
 	

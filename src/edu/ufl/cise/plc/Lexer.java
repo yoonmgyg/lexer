@@ -16,6 +16,7 @@ class Lexer implements ILexer {
   private int pos = -1;
   private int columns = 0;
   private int lines = 0;
+  private boolean end = false;
   
   private static final Map<String, Kind> keywords;
   static {
@@ -77,10 +78,9 @@ class Lexer implements ILexer {
 
 
 	public List<Token> getTokens() throws LexicalException {
-		  while (!isAtEnd()) {
+		  while (!end) {
 			  scanTokens();
 		  }
-
 		  return tokens;
 	}
 
@@ -118,6 +118,7 @@ class Lexer implements ILexer {
 		 if (isAtEnd()) {
 			  pos++;
 			  addToken(Kind.EOF);
+			  end = true;
 			  return;
 		 }
 		 
