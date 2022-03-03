@@ -93,8 +93,6 @@ class Lexer implements ILexer {
   private void addToken(Kind kind) {
     String text = chars.substring(start, pos);
     int length = pos - start;
-    System.out.println("text: " + text);
-    System.out.println(kind);
     tokens.add(new Token(kind, text, new SourceLocation(lines, columns - (length + 1)), length));
   }
 

@@ -104,22 +104,22 @@ public class Parser implements IParser {
 	private NameDef ndef() throws SyntaxException {
 		Token firstToken = t;
 		String type = t.getStringValue();
-		match(Kind.TYPE);
-		
 		NameDef nd = null;
 		String ident = null;
-
-		Dimension d = dimension();
-		if (d!= null){
-			ident = t.getText();
-			match(Kind.IDENT);
-			nd = new NameDefWithDim(firstToken, type, ident, d);
-			
-		}
-		else if (isKind(Kind.IDENT)) {
-			ident = t.getText();
-			match(Kind.IDENT);
-			nd = new NameDef(firstToken, type, ident);
+		if (isKind(Kind.TYPE)) {
+			match(Kind.TYPE);
+			Dimension d = dimension();
+			if (d!= null){
+				ident = t.getText();
+				match(Kind.IDENT);
+				nd = new NameDefWithDim(firstToken, type, ident, d);
+				
+			}
+			else if (isKind(Kind.IDENT)) {
+				ident = t.getText();
+				match(Kind.IDENT);
+				nd = new NameDef(firstToken, type, ident);
+			}
 		}
 		return nd;
 	}
