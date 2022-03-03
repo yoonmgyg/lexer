@@ -93,6 +93,8 @@ class Lexer implements ILexer {
   private void addToken(Kind kind) {
     String text = chars.substring(start, pos);
     int length = pos - start;
+    System.out.println("text: " + text);
+    System.out.println(kind);
     tokens.add(new Token(kind, text, new SourceLocation(lines, columns - (length + 1)), length));
   }
 
@@ -134,6 +136,10 @@ class Lexer implements ILexer {
 		 				lines++;
 		 				columns = 0;
 		 				
+		 			}
+		 			case'!' -> {
+		 				addToken(Kind.BANG);
+		 				return;
 		 			}
 		 			case '+' -> {
 		 				addToken(Kind.PLUS);
@@ -185,6 +191,10 @@ class Lexer implements ILexer {
 		 				return;
 		 			}
 
+			    	case '^' -> {
+			    		addToken(Kind.RETURN);
+			    		return;
+			    	}
 		 			case '#' -> {
 		 				state = State.HAVE_HASH;
 		 			}
@@ -229,8 +239,8 @@ class Lexer implements ILexer {
 		 	}
 		 	
 		 	case IN_NUM -> {
-		 		switch (ch) { //int_lit can only start with 1-9 so check for that
-	                case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
+		 		switch (ch) {
+	                case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' -> {
 	                }
 	                case '.' -> {
 	                    state = State.HAVE_DOT;
@@ -241,7 +251,6 @@ class Lexer implements ILexer {
 	                	if (val.compareTo(maxVal) > 0) {
 	                		throw new LexicalException("Int is too large");
 	                	}
-	                	
 	                    addToken(Kind.INT_LIT);
 	                    --pos;
 	                    --columns;
@@ -344,6 +353,8 @@ class Lexer implements ILexer {
 		 			
 			 		default -> {
 			 			addToken(Kind.MINUS);
+				 	    --pos;
+				 	    --columns;
 			 			return;
 			 		}
 		 		}
@@ -365,6 +376,9 @@ class Lexer implements ILexer {
 			 		
 		 			default -> {
 		 				addToken(Kind.LT);
+				 	    --pos;
+				 	    --columns;
+		 				return;
 		 			}
 		 		}
 		 	}
@@ -381,6 +395,8 @@ class Lexer implements ILexer {
 		 			
 			 		default -> {
 			 			addToken(Kind.GT);
+				 	    --pos;
+				 	    --columns;
 			 			return;
 			 		}
 			 		

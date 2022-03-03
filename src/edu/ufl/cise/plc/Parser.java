@@ -59,14 +59,13 @@ public class Parser implements IParser {
 	protected boolean match(Kind... kinds) throws SyntaxException {
 		for (Kind k: kinds){
 			if (k == t.getKind()) {
+				System.out.println("current: " + t.getKind());
+				System.out.println("input: " + k);
 				consume();
 				return true;
 			}	
 		}
-		for (Kind k: kinds) {
-			System.out.println(k);
-		}
-		throw new SyntaxException("Unmatching kinds" );
+		throw new SyntaxException("Unmatching kinds");
 	}
 	
 	private Program prog() throws SyntaxException {
@@ -104,7 +103,7 @@ public class Parser implements IParser {
 	
 	private NameDef ndef() throws SyntaxException {
 		Token firstToken = t;
-		String type = t.getText();
+		String type = t.getStringValue();
 		match(Kind.TYPE);
 		
 		NameDef nd = null;
@@ -154,7 +153,8 @@ public class Parser implements IParser {
 	private Expr cond() throws SyntaxException {
 		Token firstToken = t;
 		Expr e = null;
-		if(match(Kind.KW_IF)) {
+		if(isKind(Kind.KW_IF)) {
+			match(Kind.KW_IF);
 			match(Kind.LPAREN);
 			Expr condition = expr();
 			match(Kind.RPAREN);
@@ -170,7 +170,8 @@ public class Parser implements IParser {
 	private Expr or() throws SyntaxException {
 		Token firstToken = t;
 		Expr e = and();
-		while (match(Kind.OR)) {
+		while (isKind(Kind.OR)) {
+			match(Kind.OR);
 			Token operator = previous();
 			Expr right =  and();
 			e = new BinaryExpr(firstToken, e, operator, right);
@@ -181,7 +182,8 @@ public class Parser implements IParser {
 	private Expr and() throws SyntaxException {
 		Token firstToken = t;
 		Expr e = comp();
-		while (match(Kind.AND)) {
+		while (isKind(Kind.AND)) {
+			match(Kind.AND);
 			Token operator = previous();
 			Expr right =  comp();
 			e = new BinaryExpr(firstToken, e, operator, right);
@@ -192,7 +194,8 @@ public class Parser implements IParser {
 	private Expr comp() throws SyntaxException{
 		Token firstToken = t;
 		Expr e = add();
-		while (match(Kind.GT, Kind.LT, Kind.LE, Kind.GE, Kind.EQUALS, Kind.NOT_EQUALS)) {
+		while (isKind(Kind.GT, Kind.LT, Kind.LE, Kind.GE, Kind.EQUALS, Kind.NOT_EQUALS)) {
+			match(Kind.GT, Kind.LT, Kind.LE, Kind.GE, Kind.EQUALS, Kind.NOT_EQUALS);
 			Token operator = previous();
 			Expr right =  add();
 			e = new BinaryExpr(firstToken, e, operator, right);
@@ -203,7 +206,8 @@ public class Parser implements IParser {
 	private Expr add() throws SyntaxException{
 		Token firstToken = t;
 		Expr e = mult();
-		while (match(Kind.PLUS, Kind.MINUS)) {
+		while (isKind(Kind.PLUS, Kind.MINUS)) {
+			match(Kind.PLUS, Kind.MINUS);
 			Token operator = previous();
 			Expr right =  mult();
 			e = new BinaryExpr(firstToken, e, operator, right);
@@ -215,7 +219,8 @@ public class Parser implements IParser {
 	private Expr mult() throws SyntaxException{
 		Token firstToken = t;
 		Expr e = unary();
-		while (match(Kind.TIMES, Kind.DIV, Kind.MOD)) {
+		while (isKind(Kind.TIMES, Kind.DIV, Kind.MOD)) {
+			match(Kind.TIMES, Kind.DIV, Kind.MOD);
 			Token operator = previous();
 			Expr right =  unary();
 			e = new BinaryExpr(firstToken, e, operator, right);
@@ -240,14 +245,23 @@ public class Parser implements IParser {
 	}
 	
 	private Expr postFix() throws SyntaxException{
+		Token firstToken = t;
 		Expr e = PrimaryExpr();
+		PixelSelector selector = pixelSelector();
+		if (selector != null) {
+			e = new UnaryExprPostfix(firstToken, e, selector);
+		}
 		return e;
 	}
 	
 	private Expr PrimaryExpr() throws SyntaxException {
 		Expr e;
 		Token firstToken = t;
-        if(isKind(Kind.FLOAT_LIT)){
+		if (isKind(Kind.INT_LIT)) {
+			e = new IntLitExpr(firstToken);
+			match(Kind.INT_LIT);
+		}
+		else if(isKind(Kind.FLOAT_LIT)){
             e = new FloatLitExpr(firstToken);
             match(Kind.FLOAT_LIT);
         }
@@ -261,7 +275,7 @@ public class Parser implements IParser {
         }
         else if(isKind(Kind.IDENT)){
             e = new IdentExpr(firstToken);
-            match(Kind.STRING_LIT);
+            match(Kind.IDENT);
             
         }
         else if (isKind(Kind.COLOR_CONST)) {
@@ -285,8 +299,6 @@ public class Parser implements IParser {
 			match(Kind.LPAREN);
 			e = expr();
 			match(Kind.RPAREN);
-			PixelSelector selector = pixelSelector();
-			e = new UnaryExprPostfix(firstToken, e, selector);
         }
         return e;
     }
@@ -361,7 +373,7 @@ public class Parser implements IParser {
 	@Override
 	public ASTNode parse() throws PLCException {
 		t = peek();
-	    ASTNode e = expr(); 
+	    ASTNode e = prog(); 
 	    return e; 
 	}
 }

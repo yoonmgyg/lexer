@@ -21,6 +21,7 @@ public class Token implements IToken {
     @Override  
     public int getIntValue(){
 		if (kind == Kind.INT_LIT) {
+			System.out.println(input);
 			return Integer.parseInt(input);
 		}
 		return 0;
