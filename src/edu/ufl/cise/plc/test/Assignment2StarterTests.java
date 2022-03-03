@@ -45,7 +45,7 @@ class Assignment2StarterTests {
 	static final boolean VERBOSE = true;
 
 	void show(Object obj) {
-		if (VERBOSE) {
+		if (VERBOSE) { 
 			System.out.println(obj);
 		}
 	}

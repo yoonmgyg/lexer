@@ -47,21 +47,53 @@ public class Token implements IToken {
 	@Override
 
 	public String getStringValue() {
+		String stringVal = "";
 		if (kind == Kind.STRING_LIT) {
-			/*
-			String parsedInput = input.replace("\n", "\\n");
-			parsedInput = parsedInput.replace("\t", "\\t");
-			parsedInput = parsedInput.replace("\r", "\\r");
-			parsedInput = parsedInput.replace("\f", "\\f");
-			parsedInput = parsedInput.replace("\b", "\\b");
-			parsedInput = parsedInput.replace("\\'", "\'");
-			parsedInput = parsedInput.replace("\\\"", "\"");
-			parsedInput = parsedInput.replace("\\", "\\\\");
-			return parsedInput;
-			*/
-			return input;
+			for(int i = 1; i < input.length()- 1; i++) {
+				char ch = input.charAt(i);
+				if (ch == '\\') {
+					i++;
+					ch = input.charAt(i);
+					switch (ch) {
+						case 'n' -> {
+							stringVal += '\n';
+						}
+
+						case 'b' -> {
+							stringVal += '\b';
+						}
+
+						case 't' -> {
+							stringVal += '\t';
+						}
+
+						case 'f' -> {
+							stringVal += '\f';
+						}
+
+						case 'r' -> {
+							stringVal += '\r';
+						}
+
+						case '\"' -> {
+							stringVal += '\"';
+						}
+
+						case '\'' -> {
+							stringVal += "\'";
+							
+						}
+						case '\\' -> {
+							stringVal += '\\';
+						}
+					} 
+				}
+				else {
+					stringVal += ch;
+				}
+			}
 		}
-		return "";
+		return stringVal;
 	}
-	
 }
+

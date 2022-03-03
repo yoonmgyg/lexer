@@ -67,7 +67,7 @@ class Lexer implements ILexer {
 
   // Referenced from Lexer Implementation in Java Slides
   private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, 
-	  IN_FLOAT, IN_NUM, IN_STR, HAVE_EQ, HAVE_MINUS, HAVE_HASH, HAVE_LROW, HAVE_RROW, }
+	  IN_FLOAT, IN_NUM, IN_STR, HAVE_EQ, HAVE_MINUS, HAVE_HASH, HAVE_LROW, HAVE_RROW, HAVE_EX}
   
 
 
@@ -135,10 +135,6 @@ class Lexer implements ILexer {
 		 				columns = 0;
 		 				
 		 			}
-		 			case'!' -> {
-		 				addToken(Kind.BANG);
-		 				return;
-		 			}
 		 			case '+' -> {
 		 				addToken(Kind.PLUS);
 		 				return;
@@ -193,6 +189,13 @@ class Lexer implements ILexer {
 			    		addToken(Kind.RETURN);
 			    		return;
 			    	}
+			    	
+			    	case '>' -> {
+			    		state = State.HAVE_RROW;
+			    	}
+			    	case '<' -> {
+			    		state = State.HAVE_LROW;
+			    	}
 		 			case '#' -> {
 		 				state = State.HAVE_HASH;
 		 			}
@@ -211,6 +214,9 @@ class Lexer implements ILexer {
 			    	case '-' -> {
 			    		state = State.HAVE_MINUS;
 			    	}
+		 			case'!' -> {
+		 				state = State.HAVE_EX;
+		 			}
 			    	case 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 			    		 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 			    		 '$', '_' -> {
@@ -235,7 +241,20 @@ class Lexer implements ILexer {
 
 		 		}
 		 	}
-		 	
+		 	case HAVE_EX -> {
+		 		switch (ch) {
+			 		case '=' -> {
+			 			addToken(Kind.NOT_EQUALS);
+			 			return;
+			 		}
+			 		default -> {
+			 			addToken(Kind.BANG);
+			 			--pos;
+			 			--columns;
+			 			return;
+			 		}
+		 		}
+		 	}
 		 	case IN_NUM -> {
 		 		switch (ch) {
 	                case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' -> {
