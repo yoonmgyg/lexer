@@ -3,6 +3,7 @@ package edu.ufl.cise.plc;
 import edu.ufl.cise.plc.Token;
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.ast.*;
+import edu.ufl.cise.plc.ast.Types.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,8 +46,14 @@ public class Parser implements IParser {
 	
 
 	// Referenced from Parsing 4
-	protected boolean isKind(Kind kind) {
-	    return t.getKind() == kind;
+	
+	protected boolean isKind(Kind...kinds)  {
+		for (Kind k: kinds) {
+			if (k == t.getKind()) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	protected boolean match(Kind... kinds) throws SyntaxException {
@@ -56,7 +63,81 @@ public class Parser implements IParser {
 				return true;
 			}	
 		}
-		return false;
+		for (Kind k: kinds) {
+			System.out.println(k);
+		}
+		throw new SyntaxException("Unmatching kinds" );
+	}
+	
+	private Program prog() throws SyntaxException {
+		Token firstToken = t;
+	    Type type = Type.toType(t.getText());
+		match(Kind.TYPE, Kind.KW_VOID);
+		String ident = t.getText();
+		match(Kind.IDENT);
+		match(Kind.LPAREN);
+		List<NameDef> ndList = new ArrayList<NameDef>(); 
+		if (isKind(Kind.TYPE)) {
+			ndList.add(ndef());
+			while (isKind(Kind.COMMA)) {
+				match(Kind.COMMA);
+				ndList.add(ndef());
+			}
+		}
+		match(Kind.RPAREN);
+		List<ASTNode> stdec = new ArrayList<ASTNode>();
+		Declaration decl = decl();
+		Statement state = statement();
+		while (decl != null || state != null) {
+			match(Kind.SEMI);
+			decl = decl();
+			if (decl != null) {
+				stdec.add(decl);
+			}
+			state = statement();
+			if (state != null) {
+				stdec.add(state);
+			}
+		}
+		return new Program(firstToken, type, ident, ndList, stdec);
+	}
+	
+	private NameDef ndef() throws SyntaxException {
+		Token firstToken = t;
+		String type = t.getText();
+		match(Kind.TYPE);
+		
+		NameDef nd = null;
+		String ident = null;
+
+		Dimension d = dimension();
+		if (d!= null){
+			ident = t.getText();
+			match(Kind.IDENT);
+			nd = new NameDefWithDim(firstToken, type, ident, d);
+			
+		}
+		else if (isKind(Kind.IDENT)) {
+			ident = t.getText();
+			match(Kind.IDENT);
+			nd = new NameDef(firstToken, type, ident);
+		}
+		return nd;
+	}
+	
+	private Declaration decl() throws SyntaxException {
+		Token firstToken = t;
+		NameDef n = ndef();
+		Declaration d = null;
+		Token op = null;
+		Expr e = null;
+		if (isKind(Kind.ASSIGN, Kind.LARROW)) {
+			op = t;
+			match(Kind.ASSIGN, Kind.LARROW);
+			e = expr();
+			d = new VarDeclaration(firstToken, n, op, e);
+		}
+		return d;
 	}
 	
 	//expression
@@ -71,7 +152,7 @@ public class Parser implements IParser {
 	
 	// conditional
 	private Expr cond() throws SyntaxException {
-		Token firstToken = tokens.get(current);
+		Token firstToken = t;
 		Expr e = null;
 		if(match(Kind.KW_IF)) {
 			match(Kind.LPAREN);
@@ -183,6 +264,23 @@ public class Parser implements IParser {
             match(Kind.STRING_LIT);
             
         }
+        else if (isKind(Kind.COLOR_CONST)) {
+        	e = new ColorConstExpr(firstToken);
+        	match(Kind.COLOR_CONST);
+        }
+        else if (isKind(Kind.LANGLE)) {
+        	Expr red = expr();
+        	match(Kind.COMMA);
+        	Expr green = expr();
+        	match(Kind.COMMA);
+        	Expr blue = expr();
+        	match(Kind.RANGLE);
+        	e = new ColorExpr(firstToken, red, green, blue);
+        }
+        else if (isKind(Kind.KW_CONSOLE)) {
+        	e = new ConsoleExpr(firstToken);
+        	match(Kind.KW_CONSOLE);
+        }
         else {
 			match(Kind.LPAREN);
 			e = expr();
@@ -195,13 +293,68 @@ public class Parser implements IParser {
 	
 	private PixelSelector pixelSelector() throws SyntaxException {
 		Token firstToken = t;
-		match(Kind.LSQUARE);
-		Expr x = expr();
-		match(Kind.COMMA);
-		Expr y = expr();
-		match(Kind.RSQUARE);
-		PixelSelector e = new PixelSelector(firstToken, x, y);
+		PixelSelector e = null;
+		if (isKind(Kind.LSQUARE)) {
+			match(Kind.LSQUARE);
+			Expr x = expr();
+			match(Kind.COMMA);
+			Expr y = expr();
+			match(Kind.RSQUARE);
+			e = new PixelSelector(firstToken, x, y);
+		}
 		return e;
+		
+	}
+	private Dimension dimension() throws SyntaxException {
+		Token firstToken = t;
+		Dimension d = null;
+		if (isKind(Kind.LSQUARE)) {
+			match(Kind.LSQUARE);
+			Expr x = expr();
+			match(Kind.COMMA);
+			Expr y = expr();
+			match(Kind.RSQUARE);
+			d = new Dimension(firstToken, x, y);
+		}
+		return d;
+	
+	}
+	
+	private Statement statement() throws SyntaxException {
+		Token firstToken = t;
+		Statement state = null;
+		
+		if (isKind(Kind.IDENT)) {
+			String ident = t.getStringValue();
+			match(Kind.IDENT);
+			PixelSelector p = pixelSelector();
+			
+			Expr e = null;
+			if (isKind(Kind.ASSIGN)) {
+				match(Kind.ASSIGN);
+				e = expr();
+				state = new AssignmentStatement(firstToken, ident, p, e);
+			}
+			else if (isKind(Kind.LARROW)) {
+				match(Kind.LARROW);
+				e = expr(); 
+				state = new ReadStatement(firstToken, ident, p, e);
+			}
+		}
+		
+		else if (isKind(Kind.KW_WRITE)) {
+			Expr source = expr();
+			match(Kind.RARROW);
+			Expr dest = expr();
+			state = new WriteStatement(firstToken, source, dest);
+		}
+		else if (isKind(Kind.RETURN)) {
+			match(Kind.RETURN);
+			Expr e = expr();
+			state = new ReturnStatement(firstToken, e);
+		}
+			
+		return state;
 		
 	}
 	
