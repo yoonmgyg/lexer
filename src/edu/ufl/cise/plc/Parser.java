@@ -12,6 +12,8 @@ public class Parser implements IParser {
 	private final List<Token> tokens;
 	private int current = 0;
 	private Token t;
+	private List<NameDef> ndList = new ArrayList<NameDef>(); 
+	private List<ASTNode> stdec = new ArrayList<ASTNode>();
   
 	Parser(List<Token> tokens) {
 		this.tokens = tokens;
@@ -24,6 +26,14 @@ public class Parser implements IParser {
 		return tokens.get(current);
 	}
 
+	private Token next() {
+		if (!isAtEnd()) {
+			return tokens.get(current+1);
+		}
+		else {
+			return peek();
+		}
+	}
 	//Referenced from Crafting Interpreters 6.2
 	private Token previous() {
 		return tokens.get(current - 1);
@@ -58,9 +68,13 @@ public class Parser implements IParser {
 	
 	protected boolean match(Kind... kinds) throws SyntaxException {
 		for (Kind k: kinds){
+			/*
+			System.out.println("current: " + t.getKind());
+			System.out.println("wanted: " +  k);
+			*/
 			if (k == t.getKind()) {
-				System.out.println("current: " + t.getKind());
-				System.out.println("input: " + k);
+				/*System.out.println(t.getKind());
+				 */
 				consume();
 				return true;
 			}	
@@ -75,7 +89,6 @@ public class Parser implements IParser {
 		String ident = t.getText();
 		match(Kind.IDENT);
 		match(Kind.LPAREN);
-		List<NameDef> ndList = new ArrayList<NameDef>(); 
 		if (isKind(Kind.TYPE)) {
 			ndList.add(ndef());
 			while (isKind(Kind.COMMA)) {
@@ -84,17 +97,17 @@ public class Parser implements IParser {
 			}
 		}
 		match(Kind.RPAREN);
-		List<ASTNode> stdec = new ArrayList<ASTNode>();
-		Declaration decl = decl();
-		Statement state = statement();
-		while (decl != null || state != null) {
-			match(Kind.SEMI);
-			decl = decl();
-			if (decl != null) {
+
+		while (isKind(Kind.IDENT, Kind.TYPE, Kind.KW_WRITE, Kind.RETURN)) {
+			System.out.println(t.getKind() + " " + t.getText());
+			if (isKind(Kind.TYPE)) {
+				Declaration decl = decl();
+				match(Kind.SEMI);
 				stdec.add(decl);
 			}
-			state = statement();
-			if (state != null) {
+			else {
+				Statement state = statement();
+				match(Kind.SEMI);
 				stdec.add(state);
 			}
 		}
@@ -103,20 +116,19 @@ public class Parser implements IParser {
 	
 	private NameDef ndef() throws SyntaxException {
 		Token firstToken = t;
-		String type = t.getStringValue();
+		String type = t.getText();
 		NameDef nd = null;
 		String ident = null;
 		if (isKind(Kind.TYPE)) {
 			match(Kind.TYPE);
 			Dimension d = dimension();
+			ident = t.getText();
 			if (d!= null){
-				ident = t.getText();
 				match(Kind.IDENT);
 				nd = new NameDefWithDim(firstToken, type, ident, d);
 				
 			}
 			else if (isKind(Kind.IDENT)) {
-				ident = t.getText();
 				match(Kind.IDENT);
 				nd = new NameDef(firstToken, type, ident);
 			}
@@ -134,11 +146,48 @@ public class Parser implements IParser {
 			op = t;
 			match(Kind.ASSIGN, Kind.LARROW);
 			e = expr();
-			d = new VarDeclaration(firstToken, n, op, e);
 		}
+		d = new VarDeclaration(firstToken, n, op, e);
 		return d;
 	}
 	
+	private Statement statement() throws SyntaxException {
+		Token firstToken = t;
+		Statement state = null;
+		if (isKind(Kind.IDENT)) {
+			String ident = t.getText();
+			match(Kind.IDENT);
+			PixelSelector p = pixelSelector();
+			
+			Expr e = null;
+			if (isKind(Kind.ASSIGN)) {
+				match(Kind.ASSIGN);
+				e = expr();
+				state = new AssignmentStatement(firstToken, ident, p, e);
+			}
+			else if (isKind(Kind.LARROW)) {
+				match(Kind.LARROW);
+				e = expr(); 
+				state = new ReadStatement(firstToken, ident, p, e);
+			}
+		}
+		
+		else if (isKind(Kind.KW_WRITE)) {
+			match(Kind.KW_WRITE);
+			Expr source = expr();
+			match(Kind.RARROW);
+			Expr dest = expr();
+			state = new WriteStatement(firstToken, source, dest);
+		}
+		else if (isKind(Kind.RETURN)) {
+			match(Kind.RETURN);
+			Expr e = expr();
+			state = new ReturnStatement(firstToken, e);
+		}
+			
+		return state;
+		
+	}
 	//expression
 	private Expr expr() throws SyntaxException{
 		Expr e = cond();
@@ -331,44 +380,7 @@ public class Parser implements IParser {
 		return d;
 	
 	}
-	
-	private Statement statement() throws SyntaxException {
-		Token firstToken = t;
-		Statement state = null;
-		
-		if (isKind(Kind.IDENT)) {
-			String ident = t.getStringValue();
-			match(Kind.IDENT);
-			PixelSelector p = pixelSelector();
-			
-			Expr e = null;
-			if (isKind(Kind.ASSIGN)) {
-				match(Kind.ASSIGN);
-				e = expr();
-				state = new AssignmentStatement(firstToken, ident, p, e);
-			}
-			else if (isKind(Kind.LARROW)) {
-				match(Kind.LARROW);
-				e = expr(); 
-				state = new ReadStatement(firstToken, ident, p, e);
-			}
-		}
-		
-		else if (isKind(Kind.KW_WRITE)) {
-			Expr source = expr();
-			match(Kind.RARROW);
-			Expr dest = expr();
-			state = new WriteStatement(firstToken, source, dest);
-		}
-		else if (isKind(Kind.RETURN)) {
-			match(Kind.RETURN);
-			Expr e = expr();
-			state = new ReturnStatement(firstToken, e);
-		}
-			
-		return state;
-		
-	}
+
 	
 	@Override
 	public ASTNode parse() throws PLCException {

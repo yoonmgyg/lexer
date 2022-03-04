@@ -98,7 +98,10 @@ class Lexer implements ILexer {
 
   @Override
   public IToken next() throws LexicalException {
+	  int i = 0;
 	  while (tokens.isEmpty()) {
+		  tokens.get(i);
+		  i++;
 		  scanTokens();
 	  }
 	  return tokens.remove(0);
@@ -279,7 +282,9 @@ class Lexer implements ILexer {
 		 	case IN_STR -> {
 		 		switch(ch) {
 		 			case '"' -> {
+		 				++pos;
 		 				addToken(Kind.STRING_LIT);
+		 				--pos;
 		 				return;
 		 			}
 		 			case 0 -> {
