@@ -46,53 +46,52 @@ public class Token implements IToken {
 	@Override
 
 	public String getStringValue() {
-		String stringVal = "";
-		if (kind == Kind.STRING_LIT) {
-			for(int i = 1; i < input.length()- 1; i++) {
-				char ch = input.charAt(i);
-				if (ch == '\\') {
-					i++;
-					ch = input.charAt(i);
-					switch (ch) {
-						case 'n' -> {
-							stringVal += '\n';
-						}
+        String stringVal = "";
 
-						case 'b' -> {
-							stringVal += '\b';
-						}
+            for(int i = 1; i < input.length()- 1; i++) {
+                char ch = input.charAt(i);
+                if (ch == '\\') {
+                    i++;
+                    ch = input.charAt(i);
+                    switch (ch) {
+                        case 'n' -> {
+                            stringVal += '\n';
+                        }
 
-						case 't' -> {
-							stringVal += '\t';
-						}
+                        case 'b' -> {
+                            stringVal += '\b';
+                        }
 
-						case 'f' -> {
-							stringVal += '\f';
-						}
+                        case 't' -> {
+                            stringVal += '\t';
+                        }
 
-						case 'r' -> {
-							stringVal += '\r';
-						}
+                        case 'f' -> {
+                            stringVal += '\f';
+                        }
 
-						case '\"' -> {
-							stringVal += '\"';
-						}
+                        case 'r' -> {
+                            stringVal += '\r';
+                        }
 
-						case '\'' -> {
-							stringVal += "\'";
-							
-						}
-						case '\\' -> {
-							stringVal += '\\';
-						}
-					} 
-				}
-				else {
-					stringVal += ch;
-				}
-			}
-		}
-		return stringVal;
-	}
+                        case '\"' -> {
+                            stringVal += '\"';
+                        }
+
+                        case '\'' -> {
+                            stringVal += "\'";
+
+                        }
+                        case '\\' -> {
+                            stringVal += '\\';
+                        }
+                    }
+                }
+                else {
+                    stringVal += input.charAt(i);
+                }
+            }
+
+        return stringVal;
+    }
 }
-
