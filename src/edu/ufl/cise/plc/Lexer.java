@@ -67,7 +67,7 @@ class Lexer implements ILexer {
 
   // Referenced from Lexer Implementation in Java Slides
   private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, 
-	  IN_FLOAT, IN_NUM, IN_STR, HAVE_EQ, HAVE_MINUS, HAVE_HASH, HAVE_LROW, HAVE_RROW, HAVE_EX}
+	  IN_FLOAT, IN_NUM, IN_STR, HAVE_EQ, HAVE_MINUS, HAVE_HASH, HAVE_LROW, HAVE_RROW, HAVE_EX, IN_COND, END_COND}
   
 
 
@@ -92,6 +92,10 @@ class Lexer implements ILexer {
   
   private void addToken(Kind kind) {
     String text = chars.substring(start, pos);
+    /*
+    System.out.println("Token: " + kind.toString());
+    System.out.println(text);
+    */
     int length = pos - start;
     tokens.add(new Token(kind, text, new SourceLocation(lines, columns - (length + 1)), length));
   }
@@ -221,10 +225,16 @@ class Lexer implements ILexer {
 		 				state = State.HAVE_EX;
 		 			}
 			    	case 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-			    		 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+			    		 'a', 'b', 'c', 'd', 'e', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 			    		 '$', '_' -> {
 			    			 state = State.IN_IDENT;
 			    	}	 
+			    	case 'i' -> {
+			    		state = State.IN_COND;
+			    	}
+			    	case 'f' -> {
+			    		state = State.END_COND;
+			    	}
 			    	default -> throw new LexicalException("invalid character");
 		 		}
 		 	}
@@ -232,7 +242,9 @@ class Lexer implements ILexer {
 		 	case HAVE_EQ -> {
 		 		switch(ch) {
 		 			case '=' -> {
+		 				pos++;
 		 				addToken(Kind.EQUALS);
+		 				pos--;
 		 				return;
 		 			}
 		 			default -> {
@@ -247,7 +259,9 @@ class Lexer implements ILexer {
 		 	case HAVE_EX -> {
 		 		switch (ch) {
 			 		case '=' -> {
+			 			pos++;
 			 			addToken(Kind.NOT_EQUALS);
+			 			pos--;
 			 			return;
 			 		}
 			 		default -> {
@@ -278,7 +292,48 @@ class Lexer implements ILexer {
 			 		}
 		 		}
 		 	}
-		 	
+		 	case IN_COND -> {
+		 		switch (ch) {
+		 		case 'f' -> {
+		 			if (!isAtEnd() && chars.charAt(pos+1) == ' ') {
+		 				pos++;
+		 				addToken(Kind.KW_IF);
+		 				pos--;
+		 				return;
+		 			}
+		 			--pos;
+		 			--columns;
+		 			state = State.IN_IDENT;
+		 		}
+		 		default-> {
+		 			--pos;
+		 			--columns;
+		 			state = State.IN_IDENT;
+		 		}
+		 		
+		 		}
+		 	}
+		 	case END_COND -> {
+		 		switch (ch) {
+		 		case 'i' -> {
+		 			if (!isAtEnd() && chars.charAt(pos+1) == ' ') {
+		 				pos++;
+		 				addToken(Kind.KW_FI);
+		 				pos--;
+		 				return;
+			 			}
+		 				--pos;
+		 				--columns;
+			 			state = State.IN_IDENT;
+			 		}
+			 		default-> {
+			 			--pos;
+			 			--columns;
+			 			state = State.IN_IDENT;
+			 		}
+		 		
+		 		}
+		 	}
 		 	case IN_STR -> {
 		 		switch(ch) {
 		 			case '"' -> {

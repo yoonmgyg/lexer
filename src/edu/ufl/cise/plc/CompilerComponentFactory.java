@@ -1,6 +1,7 @@
 package edu.ufl.cise.plc;
 
 import edu.ufl.cise.plc.Lexer;
+import edu.ufl.cise.plc.ast.ASTVisitor;
 
 
 public class CompilerComponentFactory {
@@ -14,4 +15,11 @@ public class CompilerComponentFactory {
 		return new Parser(newLexer.getTokens());
 	}
 	
+	public static TypeCheckVisitor getTypeChecker() throws TypeCheckException{
+		return new TypeCheckVisitor();
+	}
+	
+	public static ASTVisitor getCodeGenerator(String packageName) throws Exception {
+		return new CodeGenVisitor(packageName);
+	}
 }

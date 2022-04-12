@@ -16,8 +16,21 @@ public class Token implements IToken {
 	public Kind getKind(){return kind;}
     @Override 
     public String getText() {
-        return input;
+    	if (kind == Kind.PLUS) {
+    		return "+";
+    	}
+    	else if (kind == Kind.MINUS) {
+    		return "-";
+    	}
+    	else if (kind == Kind.TIMES) {
+    		return "*";
+    	}
+    	else if (kind == Kind.DIV) {
+    		return "/";
+    	}
+    	return input;
       }
+ 
     @Override  
     public int getIntValue(){
 		if (kind == Kind.INT_LIT) {

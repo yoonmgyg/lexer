@@ -68,13 +68,7 @@ public class Parser implements IParser {
 	
 	protected boolean match(Kind... kinds) throws SyntaxException {
 		for (Kind k: kinds){
-			/*
-			System.out.println("current: " + t.getKind());
-			System.out.println("wanted: " +  k);
-			*/
 			if (k == t.getKind()) {
-				/*System.out.println(t.getKind());
-				 */
 				consume();
 				return true;
 			}	
@@ -99,7 +93,6 @@ public class Parser implements IParser {
 		match(Kind.RPAREN);
 
 		while (isKind(Kind.IDENT, Kind.TYPE, Kind.KW_WRITE, Kind.RETURN)) {
-			System.out.println(t.getKind() + " " + t.getText());
 			if (isKind(Kind.TYPE)) {
 				Declaration decl = decl();
 				match(Kind.SEMI);
@@ -111,6 +104,13 @@ public class Parser implements IParser {
 				stdec.add(state);
 			}
 		}
+		/*
+		for (Token token: tokens) {
+			
+			System.out.println(token.getText());
+			
+		}
+		*/
 		return new Program(firstToken, type, ident, ndList, stdec);
 	}
 	
@@ -332,6 +332,7 @@ public class Parser implements IParser {
         	match(Kind.COLOR_CONST);
         }
         else if (isKind(Kind.LANGLE)) {
+        	match(Kind.LANGLE);
         	Expr red = expr();
         	match(Kind.COMMA);
         	Expr green = expr();

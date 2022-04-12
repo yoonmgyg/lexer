@@ -68,6 +68,7 @@ class Assignment2StarterTests {
 	@Test
 	public void test1(TestInfo testInfo) throws Exception {
 		String input = """
+				
 				"this is a string"
 				""";
 		show("-------------");
