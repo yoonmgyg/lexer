@@ -92,6 +92,7 @@ class Lexer implements ILexer {
   
   private void addToken(Kind kind) {
     String text = chars.substring(start, pos);
+    
     /*
     System.out.println("Token: " + kind.toString());
     System.out.println(text);
@@ -196,7 +197,7 @@ class Lexer implements ILexer {
 			    		addToken(Kind.RETURN);
 			    		return;
 			    	}
-			    	
+
 			    	case '>' -> {
 			    		state = State.HAVE_RROW;
 			    	}
@@ -349,7 +350,7 @@ class Lexer implements ILexer {
 		 	}
 		 	case IN_FLOAT -> {
 		 		switch(ch) {
-				 	case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
+				 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
 		            }
 		 			
 			 		default -> {

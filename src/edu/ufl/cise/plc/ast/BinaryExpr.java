@@ -34,7 +34,7 @@ public class BinaryExpr extends Expr {
 
 	@Override
 	public String toString() {
-		return "BinaryExpr [left=" + left + ", op=" + op.getText() + ", right=" + right + "]";
+		return "BinaryExpr [left=" + left + ", op=" + op.getStringValue() + ", right=" + right + "]";
 	}
 
 	

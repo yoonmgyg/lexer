@@ -560,10 +560,16 @@ class Assignment5TestStarter {
 	  checkResult(input,8);
 
 	}
-
-
-
-
+	
+	@Test
+	void readTest() throws Exception {
+		String input = """
+				string testReadString0()
+				string x <- console;
+				^ x;
+				""";
+				checkResult(input,8);
+	}
 
 
 

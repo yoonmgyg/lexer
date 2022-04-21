@@ -28,6 +28,9 @@ public class Token implements IToken {
     	else if (kind == Kind.DIV) {
     		return "/";
     	}
+    	else if (kind == Kind.MOD) {
+    		return "%";
+    	}
     	return input;
       }
  

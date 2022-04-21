@@ -20,7 +20,13 @@ public class CodeGenVisitor implements ASTVisitor {
 			return false;
 		}
 		sb.lparen();
-		sb.append(coerceTo.toString().toLowerCase());
+
+		if (coerceTo == Type.STRING) {
+			sb.append("String");
+		}
+		else {
+			sb.append(coerceTo.toString().toLowerCase());
+		}
 		sb.rparen().append(" ");
 		return true;
 	}
@@ -141,6 +147,9 @@ public class CodeGenVisitor implements ASTVisitor {
 		else if (boxedType == Type.FLOAT) {
 			boxedString = "Float";
 		}
+		else if (boxedType == Type.STRING) {
+			boxedString = "String";
+		}
 		else {
 			boxedString = boxedType.toString();
 		}
@@ -148,7 +157,7 @@ public class CodeGenVisitor implements ASTVisitor {
 		sb.append(" ConsoleIO.readValueFromConsole");
 		sb.lparen().quote();
 		sb.append(boxedType.toString()).quote().comma().append(" ");
-		sb.append("\"Enter " + boxedString.toLowerCase() +": \"").rparen().semi().newline();;
+		sb.append("\"Enter " + boxedString.toLowerCase() +": \"").rparen();
 		return sb;
 	}
 

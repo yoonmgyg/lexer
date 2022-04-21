@@ -61,6 +61,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 		|| targetType==Type.IMAGE && rhsType==Type.FLOAT
 		|| targetType==Type.IMAGE && rhsType==Type.COLOR
 		|| targetType==Type.IMAGE && rhsType==Type.COLORFLOAT
+		|| targetType==Type.STRING && rhsType==Type.CONSOLE
 		
 		);
 	}

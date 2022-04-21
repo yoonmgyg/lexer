@@ -104,6 +104,7 @@ public class Parser implements IParser {
 				stdec.add(state);
 			}
 		}
+		
 		/*
 		for (Token token: tokens) {
 			
