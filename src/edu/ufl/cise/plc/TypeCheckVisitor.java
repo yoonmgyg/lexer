@@ -62,6 +62,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 		|| targetType==Type.IMAGE && rhsType==Type.COLOR
 		|| targetType==Type.IMAGE && rhsType==Type.COLORFLOAT
 		|| targetType==Type.STRING && rhsType==Type.CONSOLE
+		|| targetType==Type.IMAGE && rhsType==Type.STRING
+		|| targetType==Type.IMAGE && rhsType==Type.COLOR
 		
 		);
 	}
@@ -203,7 +205,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 			else if (leftType == Type.INT && rightType == Type.FLOAT) {
 				binaryExpr.getLeft().setCoerceTo(Type.FLOAT);
 				resultType = Type.FLOAT;
-			}
+	}
 			else if (leftType == Type.FLOAT && rightType == Type.INT) {
 				binaryExpr.getRight().setCoerceTo(Type.FLOAT);
 				resultType = Type.FLOAT;resultType = Type.FLOAT;
@@ -265,7 +267,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws Exception {
 		String name = identExpr.getText();
 		Declaration dec = symbolTable.lookup(name);
-		check(dec != null, identExpr, "undefined identifier " + name);
+		check(dec !=null , identExpr, "using undeclared variable");
 		check(dec.isInitialized(), identExpr, "using uninitialized variable");
 		identExpr.setDec(dec);  //save declaration--will be useful later. 
 		Type type = dec.getType();
@@ -314,16 +316,16 @@ public class TypeCheckVisitor implements ASTVisitor {
 	//Work incrementally and systematically, testing as you go.  
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
 		String name = assignmentStatement.getName();
+
 		Declaration dec = symbolTable.lookup(name);
-		Type exprType = (Type) assignmentStatement.getExpr().visit(this,  arg);
 		Type returnType = null;
 		
 		check(dec != null, assignmentStatement, "undefined identifier " + name);
 		dec.setInitialized(true);
 		Type targetType = dec.getType();
-		
 
 		if (targetType != Type.IMAGE) {
+			Type exprType = (Type) assignmentStatement.getExpr().visit(this,  arg);
 			check(assignmentStatement.getSelector() == null, assignmentStatement, "Non-image cannot have pixel selector");
 			check(assignmentCompatible(targetType, exprType), assignmentStatement, "Pairs are assignment incompatible");
 			if (targetType == exprType) {
@@ -350,6 +352,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 			}
 		}
 		else if (targetType == Type.IMAGE && assignmentStatement.getSelector() == null) {
+			Type exprType = (Type) assignmentStatement.getExpr().visit(this,  arg);
 			check(assignmentCompatible(targetType, exprType), assignmentStatement, "Pairs are assignment incompatible");
 			switch(exprType) {
 				case INT-> {
@@ -374,18 +377,25 @@ public class TypeCheckVisitor implements ASTVisitor {
 			}
 		}
 		else if (targetType == Type.IMAGE && assignmentStatement.getSelector() != null){
-			assignmentStatement.getSelector().visit(this, arg);
+			NameDef localDecX = new NameDef(null, "int", assignmentStatement.getSelector().getX().getText());
+			NameDef localDecY = new NameDef(null, "int", assignmentStatement.getSelector().getY().getText());
+
+			localDecX.setInitialized(true);
+			localDecY.setInitialized(true);
+			symbolTable.insert(assignmentStatement.getSelector().getX().getText(), localDecX);
+			symbolTable.insert(assignmentStatement.getSelector().getY().getText(), localDecY);
+			Type exprType = (Type) assignmentStatement.getExpr().visit(this,  arg);
 			check(exprType == COLOR || exprType == COLORFLOAT || exprType == INT || exprType == FLOAT, assignmentStatement, "Pair are assignment incompatible");
-			NameDef localDec = new NameDef(null, "INT", name);
-			symbolTable.insert(name, localDec);
+			assignmentStatement.getSelector().visit(this, arg);
+			check(symbolTable.lookup(name)!=null , assignmentStatement.getExpr(), "using undeclared variable");
 			assignmentStatement.getExpr().setCoerceTo(Type.COLOR);
 			returnType = Type.COLOR;
-			symbolTable.remove(name);
+			symbolTable.remove(assignmentStatement.getSelector().getX().getText());
+			symbolTable.remove(assignmentStatement.getSelector().getY().getText());
 		}
 		else {
 			throw new Exception("incompatible assignment");
 		}
-
 		assignmentStatement.setTargetDec(dec);
 		return returnType;
 
@@ -433,6 +443,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 		if (initializer != null) {
 			//infer type of initializer
 			Type initializerType = (Type) initializer.visit(this,arg);
+			/*
+			System.out.println(declaration.getType().toString());
+			System.out.println(initializerType.toString());
+			*/
 			check(assignmentCompatible(declaration.getType(), initializerType),declaration, 
 			"type of expression and declared type do not match");
 			declaration.getExpr().setCoerceTo(declaration.getType());
@@ -491,7 +505,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 		unaryExprPostfix.getSelector().visit(this, arg);
 		unaryExprPostfix.setType(Type.INT);
 		unaryExprPostfix.setCoerceTo(COLOR);
-		return Type.COLOR;
+		return Type.IMAGE;
 	}
 
 }

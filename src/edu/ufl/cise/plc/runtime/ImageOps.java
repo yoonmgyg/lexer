@@ -220,7 +220,25 @@ public class ImageOps {
 	 * @param right
 	 * @return
 	 */
-	
+	public static boolean binaryImageImageOp(BoolOP op, BufferedImage left, BufferedImage right) {
+		int lwidth = left.getWidth();
+		int rwidth = right.getWidth();
+		int lheight = left.getHeight();
+		int rheight = right.getHeight();
+		if (lwidth != rwidth || lheight != rheight) {
+			throw new PLCRuntimeException("Attempting boolean operation on images with unequal sizes");
+		}
+		for (int x = 0; x < lwidth; x++) {
+			for (int y = 0; y < lheight; y++) {
+				ColorTuple leftColor = ColorTuple.unpack(left.getRGB(x, y));
+				ColorTuple rightColor = ColorTuple.unpack(right.getRGB(x, y));
+				if (!binaryTupleOp(op, leftColor, rightColor)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	public static BufferedImage binaryImageImageOp(OP op, BufferedImage left, BufferedImage right) {
 		int lwidth = left.getWidth();
 		int rwidth = right.getWidth();

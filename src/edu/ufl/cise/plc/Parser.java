@@ -105,13 +105,14 @@ public class Parser implements IParser {
 			}
 		}
 		
-		/*
+		
 		for (Token token: tokens) {
 			
 			System.out.println(token.getText());
 			
 		}
-		*/
+		
+		
 		return new Program(firstToken, type, ident, ndList, stdec);
 	}
 	

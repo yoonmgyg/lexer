@@ -378,7 +378,7 @@ class Assignment3StarterTest {
 		assertEquals("color0", ((NameDef) var21).getName());
 		Expr var22 = ((VarDeclaration) var20).getExpr();
 		assertThat("", var22, instanceOf(ColorExpr.class));
-		Expr var23 = ((ColorExpr) var22).getRed();
+		Expr var23 = ((ColorExpr) var22).getRed();/''
 		assertThat("", var23, instanceOf(IntLitExpr.class));
 		assertEquals(0, ((IntLitExpr) var23).getValue());
 		Expr var24 = ((ColorExpr) var22).getGreen();

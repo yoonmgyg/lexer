@@ -26,8 +26,6 @@ public interface ASTVisitor {
 
 	Object visitDimension(Dimension dimension, Object arg) throws Exception;
 
-	Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws Exception;
-
 	Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception;
 
 	Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws Exception;
@@ -44,6 +42,8 @@ public interface ASTVisitor {
 
 	Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception;
 
-	Object visitUnaryExprPostfix(UnaryExprPostfix unaryExprPostfix, Object arg) throws Exception;;
+	Object visitUnaryExprPostfix(UnaryExprPostfix unaryExprPostfix, Object arg) throws Exception;
+	
+	Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws Exception;;
 
 }
